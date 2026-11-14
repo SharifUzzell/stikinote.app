@@ -21,10 +21,17 @@
   <nav><a href="/support">Support</a><a href="/privacy">Privacy</a></nav>
 </header>
 <section class="holding">
-  <div>
+  <div class="wait">
     <img src="/logo.png" alt="Three Stiki sticky notes fanned out">
     <h1>Sticky notes for your Home Screen.</h1>
-    <p>Stiki is almost ready. Questions, or want in on the beta? <a href="mailto:hello@stikinote.app">hello@stikinote.app</a></p>
+    <p>Stiki is in private beta. Leave your email and you'll get the TestFlight invite when the next round opens.</p>
+    <form id="waitlist" class="waitlist" action="WAITLIST_ENDPOINT" method="POST">
+      <label class="sr" for="email">Email</label>
+      <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+      <input type="text" name="_gotcha" class="sr" tabindex="-1" autocomplete="off">
+      <button class="chip accent" type="submit">Join the waitlist</button>
+    </form>
+    <p class="fine-note" id="note">No spam, no sharing — one email when it's your turn.</p>
   </div>
 </section>
 <footer>
@@ -32,5 +39,28 @@
   <div>© 2026 Sharif Uzzell · hello@stikinote.app</div>
 </footer>
 </div>
+<script>
+  // Until a form backend is wired (action="WAITLIST_ENDPOINT"), the form
+  // hands off to the mail app — nothing is lost, nothing is collected here.
+  const form = document.getElementById('waitlist');
+  const note = document.getElementById('note');
+  form.addEventListener('submit', async (e) => {
+    const email = form.email.value.trim();
+    if (form.action.endsWith('WAITLIST_ENDPOINT')) {
+      e.preventDefault();
+      location.href = 'mailto:hello@stikinote.app?subject=' + encodeURIComponent('Stiki waitlist') +
+        '&body=' + encodeURIComponent('Please add ' + email + ' to the Stiki beta waitlist.');
+      note.textContent = 'Opening your mail app — send that and you\'re on the list.';
+      return;
+    }
+    e.preventDefault();
+    try {
+      const r = await fetch(form.action, { method: 'POST', headers: { 'Accept': 'application/json' },
+        body: new FormData(form) });
+      note.textContent = r.ok ? 'You\'re on the list. Talk soon.' : 'That didn\'t go through — email hello@stikinote.app instead.';
+      if (r.ok) form.reset();
+    } catch { note.textContent = 'That didn\'t go through — email hello@stikinote.app instead.'; }
+  });
+</script>
 </body>
 </html>
